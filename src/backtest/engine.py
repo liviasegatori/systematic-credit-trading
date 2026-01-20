@@ -8,7 +8,7 @@ current_script_path = Path(__file__).resolve()
 PROJECT_ROOT = current_script_path.parents[2]
 
 DATA_PATH = PROJECT_ROOT / "data" / "processed" / "corporate_universe.csv"
-SIGNALS_PATH = PROJECT_ROOT / "data" / "processed" / "signals.csv"
+SIGNALS_PATH = PROJECT_ROOT / "data" / "processed" / "signals_ml.csv" # cambiamo in base al segnale xgb o trad
 OUTPUT_PATH = PROJECT_ROOT / "data" / "processed"
 
 # Parametri del Desk
@@ -51,14 +51,14 @@ class BacktestEngine:
         # Questo riduce i costi dell'80% istantaneamente.
         
         # FIX 2: SOGLIA DI INERZIA PIÙ ALTA
-        # Non muoverti per meno di 100k (1% del portafoglio)
+        # Non ci muoviamo per meno di 100k (1% del portafoglio)
         MIN_TRADE_SIZE = 100_000 
         
         for date in self.dates:
             # --- LOGICA WEEKLY ---
-            # Se non è venerdì E non è l'ultimo giorno del backtest... SALTA e tieni posizioni
+            # Se non è venerdì e non è l'ultimo giorno del backtest... SALTIAMO e tieniamo posizioni
             if date.weekday() != 4 and date != self.dates[-1]:
-                # Registra comunque il valore di oggi (Mark to Market)
+                # Registriamo comunque il valore di oggi (Mark to Market)
                 # (Codice duplicato per il reporting giornaliero anche se non tradiamo)
                 today_prices = self.prices.loc[date]
                 nav = self.cash
