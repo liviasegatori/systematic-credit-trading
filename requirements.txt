@@ -1,0 +1,24 @@
+# --- Core Data Science & Math ---
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+statsmodels>=0.14.0     # Per analisi statistiche avanzate (es. cointegrazione)
+
+# --- Visualization ---
+matplotlib>=3.7.0
+seaborn>=0.12.0         # Per grafici statistici (es. heatmap correlazioni)
+plotly>=5.15.0          # Per grafici interattivi nella dashboard
+
+# --- Dashboard & App ---
+streamlit>=1.25.0       
+
+# --- Notebooks & Dev Tools ---
+jupyter>=1.0.0
+ipykernel>=6.0.0
+tqdm>=4.65.0            # Progress bars (utili per i loop di backtest lunghi)
+pyyaml>=6.0             # Per gestire file di configurazione (es. configs/algo.yaml)
+
+# --- Testing & Quality (Resume-Ready Best Practices) ---
+pytest>=7.0.0           # Framework di testing
+black                   # Code formatter (per tenere il codice pulito)
+flake8                  # Linter
