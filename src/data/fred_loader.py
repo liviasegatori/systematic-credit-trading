@@ -115,7 +115,7 @@ def process_rates():
     # Forward fill to handle weekends/holidays (carry forward last known value)
     yield_curve = yield_curve.ffill()
 
-    # Filter for the requested period
+    # Filter 
     yield_curve = yield_curve.loc['2015-01-01':'2026-01-20']
 
     # Save to CSV

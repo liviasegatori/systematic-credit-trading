@@ -3,18 +3,18 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-# --- CONFIGURAZIONE ---
+# --- CONFIGURATION ---
 current_script_path = Path(__file__).resolve()
 PROJECT_ROOT = current_script_path.parents[2]
 
 DATA_PATH = PROJECT_ROOT / "data" / "processed" / "corporate_universe.csv"
-SIGNALS_PATH = PROJECT_ROOT / "data" / "processed" / "signals_ml.csv" # cambiamo in base al segnale xgb o trad
+SIGNALS_PATH = PROJECT_ROOT / "data" / "processed" / "signals_ml.csv" # change depending on xgb or trad signal
 OUTPUT_PATH = PROJECT_ROOT / "data" / "processed"
 
-# Parametri del Desk
-INITIAL_CAPITAL = 10_000_000  # 10 Milioni $
+# Desk parameters
+INITIAL_CAPITAL = 10_000_000  # 10 million $
 TRANSACTION_COST_BPS = 0.0010 # 10 bps (0.10%) per trade (Bid-Ask spread)
-MAX_LEVERAGE = 1.0            # Leva 1:1 (Long Only / Cash)
+MAX_LEVERAGE = 1.0            # Leverage 1:1 (Long Only / Cash)
 
 class BacktestEngine:
     def __init__(self, initial_capital, cost_bps):
@@ -29,7 +29,7 @@ class BacktestEngine:
         self.market_df = pd.read_csv(DATA_PATH, parse_dates=['date'])
         self.signals_df = pd.read_csv(SIGNALS_PATH, parse_dates=['date'])
         
-        # Merge per avere Prezzo e Segnale allineati
+        # Merge to align Price and Signal
         self.full_data = pd.merge(
             self.market_df, 
             self.signals_df, 
@@ -37,7 +37,7 @@ class BacktestEngine:
             how='inner'
         )
         
-        # Pivot per accesso veloce
+        # Pivot for fast access
         self.prices = self.full_data.pivot(index='date', columns='ticker', values='price')
         self.signals = self.full_data.pivot(index='date', columns='ticker', values='signal_strength')
         self.dates = self.prices.index.sort_values()
@@ -45,21 +45,21 @@ class BacktestEngine:
     def run(self):
         print(f"--- Starting Backtest ($ {self.capital:,.0f}) ---")
         
-        # FIX 1: REBALANCING SETTIMANALE
-        # I bond sono lenti. Negoziare ogni giorno regala soldi ai broker.
-        # Negoziamo solo il VENERDÌ (weekday 4).
-        # Questo riduce i costi dell'80% istantaneamente.
+        # FIX 1: WEEKLY REBALANCING
+        # Bonds are slow. Trading every day hands money to brokers.
+        # We trade only on FRIDAY (weekday 4).
+        # This instantly reduces costs by ~80%.
         
-        # FIX 2: SOGLIA DI INERZIA PIÙ ALTA
-        # Non ci muoviamo per meno di 100k (1% del portafoglio)
+        # FIX 2: HIGHER INERTIA THRESHOLD
+        # We do not move for less than 100k (1% of the portfolio)
         MIN_TRADE_SIZE = 100_000 
         
         for date in self.dates:
-            # --- LOGICA WEEKLY ---
-            # Se non è venerdì e non è l'ultimo giorno del backtest... SALTIAMO e tieniamo posizioni
+            # --- WEEKLY LOGIC ---
+            # If it's not Friday and not the last day of the backtest... SKIP and keep positions
             if date.weekday() != 4 and date != self.dates[-1]:
-                # Registriamo comunque il valore di oggi (Mark to Market)
-                # (Codice duplicato per il reporting giornaliero anche se non tradiamo)
+                # Still record today's value (Mark to Market)
+                # (Duplicated code for daily reporting even if we don't trade)
                 today_prices = self.prices.loc[date]
                 nav = self.cash
                 for ticker, qty in self.positions.items():
@@ -70,13 +70,13 @@ class BacktestEngine:
                     'date': date,
                     'nav': nav,
                     'cash': self.cash,
-                    'transaction_costs': 0, # Zero costi oggi!
+                    'transaction_costs': 0, # Zero costs today!
                     'n_positions': len([k for k,v in self.positions.items() if v != 0])
                 })
                 continue
             # ---------------------
 
-            # SE È VENERDÌ -> ESEGUI IL REBALANCING
+            # IF IT'S FRIDAY -> PERFORM REBALANCING
             try:
                 today_prices = self.prices.loc[date]
                 today_signals = self.signals.loc[date].fillna(0)
@@ -107,7 +107,7 @@ class BacktestEngine:
                     trade_qty = target_qty - current_qty
                     trade_dollar_val = abs(trade_qty * price)
                     
-                    # Filtro inerzia (100k)
+                    # Inertia filter (100k)
                     if trade_dollar_val < MIN_TRADE_SIZE:
                         continue
 
@@ -119,7 +119,7 @@ class BacktestEngine:
             
             self.cash -= trades_cost
             
-            # Calcolo NAV finale di giornata
+            # Calculate end-of-day NAV
             nav = self.cash
             for ticker, qty in self.positions.items():
                 px = today_prices.get(ticker, 0)
@@ -138,7 +138,7 @@ class BacktestEngine:
     def save_results(self):
         res_df = pd.DataFrame(self.history).set_index('date')
         
-        # Calcola metriche
+        # Compute metrics
         res_df['returns'] = res_df['nav'].pct_change()
         cumulative_ret = (res_df['nav'].iloc[-1] / res_df['nav'].iloc[0]) - 1
         sharpe = (res_df['returns'].mean() / res_df['returns'].std()) * np.sqrt(252)
